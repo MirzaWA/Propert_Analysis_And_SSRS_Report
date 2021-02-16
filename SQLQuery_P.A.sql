@@ -1,7 +1,7 @@
 --1.a) Display a list of all property names and their property id’s for Owner Id: 1426. 
 
 SELECT
-	op.PropertyId,op.OwnerId,p.Name AS 'property_name', p.PropertyTypeId
+	op.PropertyId,op.OwnerId,p.Name AS 'property_name'
 FROM 
 	dbo.Property AS p
 LEFT JOIN 
@@ -12,7 +12,7 @@ WHERE op.OwnerId = 1426;
 --1.b. Current home value for each property in question 1.a
 
 SELECT
-	op.PropertyId, op.OwnerId,p.name AS 'property_name',value AS 'Property_Value', PropertyTypeId
+	op.PropertyId, op.OwnerId,p.name AS 'property_name',value AS 'Property_Value'
 FROM
 	dbo.OwnerProperty AS op
 LEFT JOIN
@@ -27,8 +27,6 @@ WHERE op.OwnerId=1426
 --1.c.i) For each property in question a), return the following: Using rental payment amount, rental payment frequency, 
 --tenant start date and tenant end date to write a query that returns the sum of all payments from start date to end date. 
 
---1.c.i. Corrected
-
 SELECT 
 	tp.PropertyId,op.OwnerId,p.Name as 'Property_Name',
 (CASE
@@ -42,7 +40,6 @@ WHEN tp.PaymentFrequencyId= 3
 THEN (DATEDIFF(Month, StartDate, EndDate)+1)*tp.PaymentAmount
 --Added 1 with the number of month as DATEDIFF function counts the difference of StartDate and EndDate
 -- So the difference become 11 months and 1 month goes missing, although the duration is 1 full year=12 months.
-
 ELSE ''
 END ) AS Total_Rent_Received
 
@@ -59,17 +56,41 @@ WHERE op.OwnerId=1426;
 
 --1.c.ii) Display the yield.
 
-SELECT op.OwnerId,p.Name as 'Property_Name', pf.Yield
+SELECT 
+	tp.PropertyId,op.OwnerId,p.Name as 'Property_Name',
+(CASE
+WHEN tp.PaymentFrequencyId= 1
+THEN DATEDIFF(Week, StartDate, EndDate)*tp.PaymentAmount
+
+WHEN tp.PaymentFrequencyId= 2
+THEN (DATEDIFF(Week, StartDate, EndDate)/2)*tp.PaymentAmount
+
+WHEN tp.PaymentFrequencyId= 3
+THEN (DATEDIFF(Month, StartDate, EndDate)+1)*tp.PaymentAmount
+ELSE ''
+END ) AS Total_Rent_Received,phv.value AS 'Property_Value',
+
+(CASE
+WHEN tp.PaymentFrequencyId= 1
+THEN ((DATEDIFF(Week, StartDate, EndDate)*tp.PaymentAmount)/phv.Value)*100
+
+WHEN tp.PaymentFrequencyId= 2
+THEN ((DATEDIFF(Week, StartDate, EndDate)/2)*tp.PaymentAmount/phv.Value)*100
+
+WHEN tp.PaymentFrequencyId= 3
+THEN ((DATEDIFF(Month, StartDate, EndDate)+1)*tp.PaymentAmount/phv.Value)*100
+ELSE ''
+END ) AS Yield
+
 FROM 
-	PropertyFinance AS pf
-
+	TenantProperty AS tp
 	LEFT JOIN Property AS p
-	ON pf.PropertyId= p.Id
-
+	ON tp.PropertyId= p.Id
 	LEFT JOIN OwnerProperty AS op
 	ON p.Id = op.PropertyId
-
-WHERE op.OwnerId=1426;
+	LEFT JOIN dbo.PropertyHomeValue AS phv ON phv.PropertyId= p.id
+WHERE op.OwnerId=1426
+AND phv.IsActive=1;
  
 
  --1.d Display all the jobs available
