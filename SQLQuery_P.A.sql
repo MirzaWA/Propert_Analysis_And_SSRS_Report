@@ -94,8 +94,10 @@ AND phv.IsActive=1;
  
 
  --1.d Display all the jobs available
-SELECT PropertyId,JobDescription AS Curently_available_job_Description_, PaymentAmount
-FROM Job
+SELECT j.PropertyId,jm.JobId, j.JobDescription AS Curently_available_job_Description, j.PaymentAmount
+FROM Job as j
+LEFT JOIN JobMedia as jm
+ON j.PropertyId= jm.PropertyId
 WHERE JobStatusId=1;
 
 
